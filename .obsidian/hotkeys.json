@@ -1,0 +1,27 @@
+{
+  "quickadd:choice:c9b3f024-f227-41f0-8f97-9e2488f080d5": [
+    {
+      "modifiers": [
+        "Mod"
+      ],
+      "key": "S"
+    }
+  ],
+  "editor:save-file": [],
+  "quickadd:choice:499dace4-3978-4703-8b53-9efc2e8f61a4": [
+    {
+      "modifiers": [
+        "Mod"
+      ],
+      "key": "End"
+    }
+  ],
+  "obsidian-git:backup-and-close": [
+    {
+      "modifiers": [
+        "Mod"
+      ],
+      "key": "End"
+    }
+  ]
+}
