@@ -1,0 +1,39 @@
+{
+  "edges": [
+  ],
+  "nodes": [
+    {
+      "height": 60,
+      "id": "e9e0f27aa140511b",
+      "styleAttributes": {
+      },
+      "text": "",
+      "type": "text",
+      "width": 260,
+      "x": -260,
+      "y": 20
+    },
+    {
+      "file": "「整理という名の苦行-なぜデジタルツールを使っても情報は片付かないのか？」調査結果.md",
+      "height": 740,
+      "id": "d74c4607b565711c",
+      "styleAttributes": {
+      },
+      "type": "file",
+      "width": 720,
+      "x": -580,
+      "y": -500
+    },
+    {
+      "file": "原稿　想定.md",
+      "height": 580,
+      "id": "678c57b383a71a7e",
+      "styleAttributes": {
+      },
+      "type": "file",
+      "width": 540,
+      "x": -580,
+      "y": 340
+    }
+  ]
+}
