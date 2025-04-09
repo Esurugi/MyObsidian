@@ -20,7 +20,7 @@
       "styleAttributes": {
       },
       "type": "file",
-      "width": 720,
+      "width": 700,
       "x": -580,
       "y": -500
     },
@@ -45,6 +45,17 @@
       "width": 700,
       "x": 340,
       "y": 340
+    },
+    {
+      "file": "デジタル整理のUIUXトレードオフ問題「整理ツール自体の整理」ジレンマ.md",
+      "height": 740,
+      "id": "dcc95456041c9abc",
+      "styleAttributes": {
+      },
+      "type": "file",
+      "width": 660,
+      "x": 240,
+      "y": -500
     }
   ]
 }
