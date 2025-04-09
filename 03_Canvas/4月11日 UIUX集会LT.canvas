@@ -25,17 +25,6 @@
       "y": -500
     },
     {
-      "file": "原稿　想定.md",
-      "height": 580,
-      "id": "678c57b383a71a7e",
-      "styleAttributes": {
-      },
-      "type": "file",
-      "width": 720,
-      "x": -580,
-      "y": 340
-    },
-    {
       "height": 700,
       "id": "2767c6982fee571a",
       "styleAttributes": {
@@ -56,6 +45,17 @@
       "width": 660,
       "x": 240,
       "y": -500
+    },
+    {
+      "file": "原稿　想定.md",
+      "height": 580,
+      "id": "678c57b383a71a7e",
+      "styleAttributes": {
+      },
+      "type": "file",
+      "width": 720,
+      "x": -580,
+      "y": 340
     }
   ]
 }
