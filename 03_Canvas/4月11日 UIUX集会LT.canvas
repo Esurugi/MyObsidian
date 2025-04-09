@@ -34,6 +34,17 @@
       "width": 720,
       "x": -580,
       "y": 340
+    },
+    {
+      "height": 700,
+      "id": "2767c6982fee571a",
+      "styleAttributes": {
+      },
+      "text": "",
+      "type": "text",
+      "width": 700,
+      "x": 340,
+      "y": 340
     }
   ]
 }
