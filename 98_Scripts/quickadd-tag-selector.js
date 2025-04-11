@@ -1,8 +1,17 @@
 module.exports = async (params) => {
-  // モード判定 (新規ノート作成からの呼び出しかどうか)
-  const isFromNewNote = params.variables && params.variables["fromNewNote"] === true;
-  // サブDBタグ作成モードかどうかを判定（新しいフラグ）
-  const isSubTagCreation = params.variables && params.variables["isSubTagCreation"] === true;
+  // QuickAddの呼び出し元パスから実行モードを判断
+  const caller = params.app?.workspace?.activeLeaf?.view?.getState()?.file;
+  const callerPath = caller ? caller.replace(/^.*[\\\/]/, '') : '';
+  
+  // モード判定 (変数が渡されない場合のフォールバック処理を追加)
+  const isFromNewNote = (params.variables && params.variables["fromNewNote"] === true) || 
+                       (callerPath.includes("新規ノート") || callerPath.includes("NewNote"));
+  
+  // サブDBタグ作成モードかどうかを判定（パス名からも判定）
+  const isSubTagCreation = (params.variables && params.variables["isSubTagCreation"] === true) ||
+                         (callerPath.includes("サブDBタグ") || callerPath.includes("Subtag"));
+  
+  console.log("Mode detection:", { isFromNewNote, isSubTagCreation, callerPath });
   
   // タグフォルダからすべての小分類タグを取得
   const tagFolder = "02_DB_tags";

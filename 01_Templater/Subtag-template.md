@@ -1,5 +1,5 @@
 ---
-aliases: [<% tp.file.title %>タグ]
+aliases: ["<% tp.file.title %>", "<% tp.file.title %>タグ"]
 type: subTag
 created: <% tp.file.creation_date() %>
 updated: <% tp.file.last_modified_date() %>
@@ -16,7 +16,7 @@ tags: [tag<% tp.frontmatter.mainCategories ? ", " + tp.frontmatter.mainCategorie
 TABLE 
   file.ctime as "作成日", 
   file.mtime as "更新日"
-FROM #"<% tp.file.title %>" OR [[<% tp.file.title %>]]
+FROM #<% tp.file.title %>
 WHERE file.name != "<% tp.file.title %>"
 SORT file.mtime DESC
 ```
