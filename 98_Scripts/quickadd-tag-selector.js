@@ -330,8 +330,8 @@ mainTags: ${mainTagsYaml}
 TABLE 
   file.ctime as "作成日", 
   file.mtime as "更新日"
-FROM [[${tagName}]]
-WHERE file.name != "${tagName}"
+FROM [[${tagName}]] 
+WHERE file.name != "${tagName}" AND !contains(file.path, "01_Templater")
 SORT file.mtime DESC
 \`\`\`
 

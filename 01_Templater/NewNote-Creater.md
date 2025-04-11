@@ -1,12 +1,12 @@
 ---
 created: <% tp.file.creation_date() %>
 updated: <% tp.file.last_modified_date() %>
-tags: <% tp.frontmatter.selectedTags ? tp.frontmatter.selectedTags : "" %>
+tags: ["テスト"]
 ---
 
 # <% tp.file.title %>
 
-関連タグ: <% tp.frontmatter.tagLinks ? tp.frontmatter.tagLinks : "" %>
+関連タグ: [[テスト]]
 
 ## メモ
 

@@ -55,7 +55,7 @@ TABLE
   file.ctime as "作成日", 
   file.mtime as "更新日"
 FROM [[${subTagName}]] 
-WHERE file.name != "${subTagName}"
+WHERE file.name != "${subTagName}" AND !contains(file.path, "01_Templater")
 SORT file.mtime DESC
 \`\`\`
 

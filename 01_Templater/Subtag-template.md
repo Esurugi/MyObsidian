@@ -17,5 +17,5 @@ TABLE
   file.ctime as "作成日", 
   file.mtime as "更新日"
 FROM [[<% tp.file.title %>]] 
-WHERE file.name != "<% tp.file.title %>"
+WHERE file.name != "<% tp.file.title %>" AND !contains(file.path, "01_Templater")
 SORT file.mtime DESC
