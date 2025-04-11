@@ -34,19 +34,19 @@ module.exports = async (params) => {
         if (!mainTagExists) {
           const createMainTag = await params.quickAddApi.yesNoPrompt(
             `大分類「${mainCategory}」が存在しません。作成しますか？`,
-            "大分類タグの作成"
+            "メインDBタグの作成"
           );
           
           if (createMainTag) {
             // 大分類タグ作成用のQuickAddコマンドを呼び出す
-            await params.quickAddApi.executeChoice("大分類タグ作成", {
+            await params.quickAddApi.executeChoice("メインDBタグ作成", {
               value: mainCategory
             });
           }
         }
         
         // 小分類タグ作成用のQuickAddコマンドを呼び出す
-        await params.quickAddApi.executeChoice("小分類タグ作成", {
+        await params.quickAddApi.executeChoice("サブDBタグ作成", {
           value: newTagName
         });
         
