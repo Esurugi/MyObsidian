@@ -1,9 +1,8 @@
 ---
-aliases:
-  - Studyタグ
+aliases: [Studyタグ]
 type: mainTag
-created: 2025-03-19 20:10
-updated: 2025-03-19 20:10
+created: 2025-04-11 18:42
+updated: 2025-04-11 18:46
 ---
 
 # Study タグ（大分類）
