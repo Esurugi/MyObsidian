@@ -1,32 +1,45 @@
-module.exports = async (params) => {
-  // タグ名を入力
-  const tagName = await params.quickAddApi.inputPrompt(
-    "タグ名を入力してください", 
-    "タグ名"
-  );
-  
-  if (!tagName) return;
-  
-  // 大分類タグ一覧を取得（フロントマターでtype: mainTagのファイル）
-  const tagFolder = "02_DB_tags";
+async function generateSubTag(params) {
+  // 1. 大分類タグのリストを取得
   const mainTagFiles = app.vault.getMarkdownFiles()
-    .filter(file => file.path.startsWith(tagFolder))
     .filter(file => {
       const cache = app.metadataCache.getFileCache(file);
       return cache?.frontmatter?.type === "mainTag";
     })
     .map(file => file.basename);
   
-  // ユーザーに大分類タグを選択させる
-  const selectedMainTags = await params.quickAddApi.checkboxPrompt(
-    mainTagFiles,
-    "所属させる大分類タグを選択してください（複数選択可）"
+  if (mainTagFiles.length === 0) {
+    new Notice("大分類タグが見つかりません。先に大分類タグを作成してください。");
+    return;
+  }
+  
+  // 2. 小分類タグ名の入力
+  const subTagName = await params.quickAddApi.inputPrompt(
+    "小分類タグ名を入力してください", 
+    "タグ名"
   );
   
-  // 選択した大分類タグをフォーマット
-  const formattedTags = selectedMainTags.map(tag => `- [[${tag}]]`).join('\n');
+  if (!subTagName) return;
   
-  // テンプレート変数を設定
-  params.variables["selectedMainTags"] = formattedTags;
-  params.variables["tagName"] = tagName;
-};
+  // 3. 大分類タグを複数選択
+  const selectedMainTags = await params.quickAddApi.checkboxPrompt(
+    mainTagFiles,
+    "関連付ける大分類タグを選択してください（複数選択可）"
+  );
+  
+  if (!selectedMainTags || selectedMainTags.length === 0) return;
+  
+  // 4. 選択された大分類タグをパラメータとして保存
+  params.variables["subTagName"] = subTagName;
+  params.variables["selectedMainTags"] = selectedMainTags;
+  
+  // 5. YAML配列形式で保存するためのタグ文字列を生成
+  const mainTagsYaml = JSON.stringify(selectedMainTags);
+  params.variables["mainTagsYaml"] = mainTagsYaml;
+  
+  // 6. リンク形式での大分類リスト
+  const mainTagLinks = selectedMainTags.map(tag => `[[${tag}]]`).join(", ");
+  params.variables["mainTagLinks"] = mainTagLinks;
+}
+
+// この行が重要！Templaterはこの形式のエクスポートを期待しています
+module.exports = generateSubTag;
