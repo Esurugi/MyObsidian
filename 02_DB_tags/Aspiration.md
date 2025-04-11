@@ -17,7 +17,7 @@ TABLE
   file.ctime as "作成日", 
   file.mtime as "更新日"
 FROM #tag
-WHERE contains(file.name, ";Aspiration_") OR contains(file.outlinks, "[[;Aspiration]]")
+WHERE contains(file.frontmatter.mainTags, "Aspiration")
 SORT file.name ASC
 ```
 
@@ -27,8 +27,8 @@ SORT file.name ASC
 TABLE 
   file.ctime as "作成日", 
   file.mtime as "更新日"
-FROM [[;Aspiration]] 
-WHERE file.name != ";Aspiration" AND !contains(file.name, "_")
+FROM [[Aspiration]] 
+WHERE file.name != "Aspiration" AND !contains(file.frontmatter.type, "subTag")
 SORT file.mtime DESC
 ```
 

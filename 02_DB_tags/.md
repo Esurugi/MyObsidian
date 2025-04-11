@@ -16,7 +16,7 @@ TABLE
   file.ctime as "作成日", 
   file.mtime as "更新日"
 FROM #tag
-WHERE contains(file.name, "<% tp.file.title %>_") OR contains(file.outlinks, "[[<% tp.file.title %>]]")
+WHERE contains(file.frontmatter.mainTags, "<% tp.file.title %>")
 SORT file.name ASC
 <% "```" %>
 
@@ -27,7 +27,7 @@ TABLE
   file.ctime as "作成日", 
   file.mtime as "更新日"
 FROM [[<% tp.file.title %>]] 
-WHERE file.name != "<% tp.file.title %>" AND !contains(file.name, "_")
+WHERE file.name != "<% tp.file.title %>" AND !contains(file.frontmatter.type, "subTag")
 SORT file.mtime DESC
 <% "```" %>
 

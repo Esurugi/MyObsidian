@@ -22,13 +22,17 @@ module.exports = async (params) => {
   
   if (!subTagName) return;
   
-  // 3. 大分類タグを複数選択（選択プロンプトテキストを直接渡す）
+  // 3. 大分類タグを複数選択（第二引数を空配列に修正）
+  new Notice("関連付ける大分類タグを選択してください（複数選択可）");
   const selectedMainTags = await params.quickAddApi.checkboxPrompt(
     mainTagFiles,
-    "関連付ける大分類タグを選択してください（複数選択可）"
+    [] // 正しい使い方: 第二引数はデフォルト選択項目の配列
   );
   
   if (!selectedMainTags || selectedMainTags.length === 0) return;
+  
+  // デバッグ用ログ追加
+  console.log("選択された大分類タグ:", selectedMainTags);
   
   // 4. ファイル内容を直接構築
   const fileContent = `---
