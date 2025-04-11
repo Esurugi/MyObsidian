@@ -1,13 +1,14 @@
 ---
-aliases: [;Studyタグ]
+aliases:
+  - Studyタグ
 type: mainTag
 created: 2025-03-19 20:10
 updated: 2025-03-19 20:10
 ---
 
-# ;Study タグ（大分類）
+# Study タグ（大分類）
 
-このタグは;Studyに関連する項目の大分類です。
+このタグはStudyに関連する項目の大分類です。
 
 ## 所属する小分類タグ
 
