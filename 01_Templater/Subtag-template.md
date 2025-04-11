@@ -9,14 +9,22 @@ tags: [tag]
 # <% tp.file.title %> タグ（小分類）
 
 <%*
-// ファイル名から大分類を抽出
-const fileName = tp.file.title;
-const mainCategories = fileName.split("_");
-const mainCategory = mainCategories[0];
+// クイックアドから渡された大分類情報を取得
+let mainCategories = [];
+try {
+  if (tp.frontmatter.selectedMainCategories) {
+    mainCategories = JSON.parse(tp.frontmatter.selectedMainCategories);
+  }
+} catch (e) {
+  console.error("大分類情報の解析エラー:", e);
+}
 -%>
 
-**所属大分類**: [[<% mainCategory %>]]
-<% if (mainCategories.length > 1 && mainCategories[1]) { %>**関連大分類**: [[<% mainCategories[1] %>]]<% } %>
+<% if (mainCategories && mainCategories.length > 0) { %>
+**所属大分類**: <% mainCategories.map(cat => `[[${cat}]]`).join(", ") %>
+<% } else { %>
+**所属大分類**: 未設定
+<% } %>
 
 ## 関連ノート一覧
 
