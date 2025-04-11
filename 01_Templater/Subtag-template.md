@@ -1,22 +1,16 @@
 ---
-aliases: [<% tp.file.title %>タグ]
+aliases:
+  - <% tp.file.title %>タグ
 type: subTag
 created: <% tp.file.creation_date() %>
 updated: <% tp.file.last_modified_date() %>
-tags: [tag]
 ---
 
 # <% tp.file.title %> タグ（小分類）
 
-<%*
-// ファイル名から大分類を抽出
-const fileName = tp.file.title;
-const mainCategories = fileName.split("_");
-const mainCategory = mainCategories[0];
--%>
+## 所属する大分類タグ
 
-**所属大分類**: [[<% mainCategory %>]]
-<% if (mainCategories.length > 1 && mainCategories[1]) { %>**関連大分類**: [[<% mainCategories[1] %>]]<% } %>
+<% tp.user.getSelectedMainTags ? tp.user.getSelectedMainTags() : "このタグは以下の大分類に所属しています:" %>
 
 ## 関連ノート一覧
 
