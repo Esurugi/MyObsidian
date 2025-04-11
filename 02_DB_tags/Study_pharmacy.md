@@ -1,8 +1,8 @@
 ---
 aliases: [Study_pharmacyタグ]
 type: subTag
-created: 2025-04-11 17:11
-updated: 2025-04-11 17:11
+created: 2025-04-11 17:28
+updated: 2025-04-11 17:28
 tags: リ, ン, ク, す, る, タ, グ, を, 選, 択, し, て, く, だ, さ, い, （, 複, 数, 選, 択, 可, ）, Study_pharmacy
 ---
 
@@ -18,7 +18,7 @@ tags: リ, ン, ク, す, る, タ, グ, を, 選, 択, し, て, く, だ, さ,
 TABLE 
   file.ctime as "作成日", 
   file.mtime as "更新日"
-FROM [[Study_pharmacy]] 
+FROM #"Study_pharmacy" OR [[Study_pharmacy]]
 WHERE file.name != "Study_pharmacy"
 SORT file.mtime DESC
 ```

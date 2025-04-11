@@ -4,13 +4,19 @@ module.exports = async (params) => {
   
   // タグフォルダからすべての小分類タグを取得
   const tagFolder = "02_DB_tags";
-  const subTagFiles = app.vault.getMarkdownFiles()
+  const tagFiles = app.vault.getMarkdownFiles()
     .filter(file => file.path.startsWith(tagFolder))
-    .filter(file => !file.basename.includes("/"))  // フォルダを除外
-    .map(file => file.basename);
+    .filter(file => !file.basename.includes("/"));  // フォルダを除外
   
   // タグをフィルタリング（アンダースコアを含むファイルをサブタグとして扱う）
-  const subTags = subTagFiles.filter(tag => tag.includes("_"));
+  const subTags = tagFiles
+    .filter(file => file.basename.includes("_"))
+    .map(file => file.basename);
+  
+  // メインタグを取得
+  const mainTags = tagFiles
+    .filter(file => !file.basename.includes("_"))
+    .map(file => file.basename);
   
   // タグリストに「新規タグ作成」オプションを追加
   const tagOptions = [...subTags];
@@ -36,16 +42,12 @@ module.exports = async (params) => {
     
     if (newTagName && newTagName.trim() !== "") {
       createdNewTag = true;
-      // 既存の大分類タグを取得（アンダースコアを含まないファイル）
-      const mainCategories = app.vault.getMarkdownFiles()
-        .filter(file => file.path.startsWith(tagFolder) && !file.basename.includes("_"))
-        .map(file => file.basename);
       
       // 関連付ける大分類を選択（複数選択可）
       let selectedMainCategories = [];
-      if (mainCategories.length > 0) {
+      if (mainTags.length > 0) {
         selectedMainCategories = await params.quickAddApi.checkboxPrompt(
-          mainCategories,
+          mainTags,
           "関連付ける大分類を選択してください（複数選択可）"
         );
       }
@@ -74,83 +76,94 @@ module.exports = async (params) => {
         }
       }
       
-      // 変数を設定してサブタグを作成
-      // 文字列全体を一つのリンクにするよう修正
+      // メインカテゴリリンクを正しく文字列として作成
       const mainCategoryLinks = selectedMainCategories.map(cat => `[[${cat}]]`).join(", ");
       
-      // フロントマター用のタグ文字列を作成（カンマ区切り）
-      const mainCategoriesTags = selectedMainCategories.join(", ");
-      
+      // サブタグ作成に必要な変数を設定
       const subTagVariables = {
         value: newTagName,
         mainCategories: selectedMainCategories,
         mainCategoryLinks: mainCategoryLinks,
-        mainCategoriesTags: mainCategoriesTags
+        mainCategoriesTags: selectedMainCategories.join(", ")
       };
       
-      // QuickAddでサブタグを作成（変数を渡す）
+      // QuickAddでサブタグを作成
       await params.quickAddApi.executeChoice("サブDBタグ作成", subTagVariables);
       
-      // ファイルが作成されたら、大分類情報を追加
+      // ファイルが作成されるのを待ってから処理
       setTimeout(async () => {
         try {
-          // 作成されたファイルを探す
+          // 作成されたサブタグファイルを探す
           const tagFile = app.vault.getAbstractFileByPath(`${tagFolder}/${newTagName}.md`);
           
           if (tagFile) {
-            // ファイルの内容を読み込む
+            // サブタグファイルの内容を読み込む
             const content = await app.vault.read(tagFile);
             
-            // 大分類情報がある場合、それを置き換える
+            // 大分類情報を適切に設定
             if (selectedMainCategories.length > 0) {
               // 大分類情報を正しく設定
-              const newContent = content.replace(/\*\*所属大分類\*\*\: 未設定/g, `**所属大分類**: ${mainCategoryLinks}`);
+              let updatedContent = content;
               
-              // フロントマターのtagsを修正（大分類タグを追加）
-              let updatedContent = newContent;
-              if (selectedMainCategories.length > 0) {
-                // tagsフィールドが既に存在する場合
-                const tagsRegex = /tags: \[(.*?)\]/;
-                if (tagsRegex.test(updatedContent)) {
-                  // 既存のタグに大分類タグを追加
-                  updatedContent = updatedContent.replace(tagsRegex, (match, tagContent) => {
-                    const existingTags = tagContent.split(', ');
-                    // 重複を避けるための処理
-                    const combinedTags = [...new Set([...existingTags, ...selectedMainCategories])];
-                    return `tags: [${combinedTags.join(', ')}]`;
-                  });
-                }
+              // 所属大分類を正しく設定
+              updatedContent = updatedContent.replace(
+                /\*\*所属大分類\*\*\: .*/g, 
+                `**所属大分類**: ${mainCategoryLinks}`
+              );
+              
+              // フロントマターのタグ情報を確認・更新
+              const frontMatterTagRegex = /tags: \[(.*?)\]/;
+              if (frontMatterTagRegex.test(updatedContent)) {
+                const tagMatch = updatedContent.match(frontMatterTagRegex);
+                const currentTags = tagMatch[1].split(', ').filter(t => t.trim() !== '');
+                
+                // 既存のタグにメインカテゴリを追加（重複を避ける）
+                const combinedTags = [...new Set([...currentTags, ...selectedMainCategories])];
+                updatedContent = updatedContent.replace(
+                  frontMatterTagRegex, 
+                  `tags: [tag, ${combinedTags.join(', ')}]`
+                );
               }
               
-              // 更新された内容を書き込む
+              // 更新されたサブタグファイルの内容を書き込む
               await app.vault.modify(tagFile, updatedContent);
               
-              // 各大分類のファイルを更新して、新しい小分類を関連付ける
+              // 各メインカテゴリのファイルを更新して関連付け
               for (const mainCategory of selectedMainCategories) {
-                const mainTagFile = app.vault.getAbstractFileByPath(`${tagFolder}/${mainCategory}.md`);
+                const mainTagPath = `${tagFolder}/${mainCategory}.md`;
+                const mainTagFile = app.vault.getAbstractFileByPath(mainTagPath);
+                
                 if (mainTagFile) {
-                  console.log(`大分類ファイル ${mainCategory} を更新します`);
+                  console.log(`メインカテゴリ「${mainCategory}」にサブタグ「${newTagName}」を関連付けます`);
+                  
+                  // メインタグファイルの内容を読み込む
+                  const mainContent = await app.vault.read(mainTagFile);
+                  
+                  // すでに関連付けられているか確認する必要はない
+                  // dataviewクエリが自動的に関連ファイルを表示するため
                 }
               }
             }
+          } else {
+            console.error(`サブタグファイル ${newTagName}.md が作成されませんでした`);
           }
         } catch (e) {
           console.error("タグファイル更新エラー:", e);
         }
-      }, 500); // 少し遅延させてファイル作成を待つ
+      }, 1000); // ファイル作成を待つため1000msの遅延
       
-      // 選択タグリストに新規タグを追加
+      // 作成したタグを選択タグリストに追加
       finalTags.push(newTagName);
     }
   }
   
-  // 選択したタグをQuickAddの変数として保存
+  // 選択したタグをQuickAddとTemplaterの変数として保存
   params.variables["selectedTags"] = finalTags.join(", ");
   params.variables["tagLinks"] = finalTags.map(tag => `[[${tag}]]`).join(", ");
   
-  // 新規ノート作成からの呼び出しでない場合、または新規ノート作成からの呼び出しで新規タグが作成された場合
-  // 現在のファイルにタグ情報を適用
-  if (finalTags.length > 0 && (!isFromNewNote || createdNewTag)) {
+  // 新規ノート作成時にも選択タグを設定できるよう条件を修正
+  // isFromNewNote がtrueの場合は現在のファイル更新はスキップ（テンプレートが適用する）
+  if (finalTags.length > 0 && !isFromNewNote) {
     try {
       const currentFile = app.workspace.getActiveFile();
       if (currentFile) {
@@ -163,14 +176,14 @@ module.exports = async (params) => {
           // フロントマターがある場合、tagsフィールドを追加または更新
           if (/tags:.*?(\n|$)/m.test(content)) {
             // tagsフィールドが既にある場合は更新
-            newContent = content.replace(/tags:.*?(\n|$)/m, `tags: ${finalTags.join(", ")}\n`);
+            newContent = content.replace(/tags:.*?(\n|$)/m, `tags: [${finalTags.join(", ")}]\n`);
           } else {
             // tagsフィールドがない場合は追加
-            newContent = content.replace(/^(---\n)(.*?)(\n---)/s, `$1$2\ntags: ${finalTags.join(", ")}$3`);
+            newContent = content.replace(/^(---\n)(.*?)(\n---)/s, `$1$2\ntags: [${finalTags.join(", ")}]$3`);
           }
         } else {
           // フロントマターがない場合は追加
-          newContent = `---\ntags: ${finalTags.join(", ")}\n---\n\n${content}`;
+          newContent = `---\ntags: [${finalTags.join(", ")}]\n---\n\n${content}`;
         }
         
         // 「関連タグ:」の行があるか確認し、追加または更新
