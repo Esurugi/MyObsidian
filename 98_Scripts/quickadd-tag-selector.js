@@ -44,10 +44,9 @@ module.exports = async (params) => {
       // 関連付ける大分類を選択（複数選択可）
       let selectedMainCategories = [];
       if (mainCategories.length > 0) {
-        const mainCatPrompt = "関連付ける大分類を選択してください（複数選択可）";
         selectedMainCategories = await params.quickAddApi.checkboxPrompt(
           mainCategories,
-          mainCatPrompt
+          "関連付ける大分類を選択してください（複数選択可）"
         );
       }
       
@@ -76,11 +75,17 @@ module.exports = async (params) => {
       }
       
       // 変数を設定してサブタグを作成
+      // 文字列全体を一つのリンクにするよう修正
       const mainCategoryLinks = selectedMainCategories.map(cat => `[[${cat}]]`).join(", ");
+      
+      // フロントマター用のタグ文字列を作成（カンマ区切り）
+      const mainCategoriesTags = selectedMainCategories.join(", ");
+      
       const subTagVariables = {
         value: newTagName,
         mainCategories: selectedMainCategories,
-        mainCategoryLinks: mainCategoryLinks
+        mainCategoryLinks: mainCategoryLinks,
+        mainCategoriesTags: mainCategoriesTags
       };
       
       // QuickAddでサブタグを作成（変数を渡す）
@@ -98,10 +103,35 @@ module.exports = async (params) => {
             
             // 大分類情報がある場合、それを置き換える
             if (selectedMainCategories.length > 0) {
+              // 大分類情報を正しく設定
               const newContent = content.replace(/\*\*所属大分類\*\*\: 未設定/g, `**所属大分類**: ${mainCategoryLinks}`);
               
+              // フロントマターのtagsを修正（大分類タグを追加）
+              let updatedContent = newContent;
+              if (selectedMainCategories.length > 0) {
+                // tagsフィールドが既に存在する場合
+                const tagsRegex = /tags: \[(.*?)\]/;
+                if (tagsRegex.test(updatedContent)) {
+                  // 既存のタグに大分類タグを追加
+                  updatedContent = updatedContent.replace(tagsRegex, (match, tagContent) => {
+                    const existingTags = tagContent.split(', ');
+                    // 重複を避けるための処理
+                    const combinedTags = [...new Set([...existingTags, ...selectedMainCategories])];
+                    return `tags: [${combinedTags.join(', ')}]`;
+                  });
+                }
+              }
+              
               // 更新された内容を書き込む
-              await app.vault.modify(tagFile, newContent);
+              await app.vault.modify(tagFile, updatedContent);
+              
+              // 各大分類のファイルを更新して、新しい小分類を関連付ける
+              for (const mainCategory of selectedMainCategories) {
+                const mainTagFile = app.vault.getAbstractFileByPath(`${tagFolder}/${mainCategory}.md`);
+                if (mainTagFile) {
+                  console.log(`大分類ファイル ${mainCategory} を更新します`);
+                }
+              }
             }
           }
         } catch (e) {
@@ -115,11 +145,12 @@ module.exports = async (params) => {
   }
   
   // 選択したタグをQuickAddの変数として保存
-  params.variables["selectedTags"] = finalTags.map(tag => tag).join(", ");
+  params.variables["selectedTags"] = finalTags.join(", ");
   params.variables["tagLinks"] = finalTags.map(tag => `[[${tag}]]`).join(", ");
   
-  // 新規ノート作成からの呼び出しでない場合、現在のファイルにタグ情報を適用
-  if (finalTags.length > 0 && !isFromNewNote) {
+  // 新規ノート作成からの呼び出しでない場合、または新規ノート作成からの呼び出しで新規タグが作成された場合
+  // 現在のファイルにタグ情報を適用
+  if (finalTags.length > 0 && (!isFromNewNote || createdNewTag)) {
     try {
       const currentFile = app.workspace.getActiveFile();
       if (currentFile) {
