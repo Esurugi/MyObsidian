@@ -1,17 +1,16 @@
 module.exports = async (params) => {
   // タグフォルダからすべての小分類タグを取得
   const tagFolder = "02_DB_tags";
-  const tagsFiles = app.vault.getMarkdownFiles()
+  const subTagFiles = app.vault.getMarkdownFiles()
     .filter(file => file.path.startsWith(tagFolder))
-    .filter(file => file.frontmatter && file.frontmatter.type === "subTag")  // 小分類タグのみ
     .map(file => file.basename);
   
   // タグリストに「新規タグ作成」オプションを追加
-  tagsFiles.push("+ 新規タグを作成");
+  subTagFiles.push("+ 新規タグを作成");
   
   // ユーザーに複数選択させる
   const selectedTags = await params.quickAddApi.checkboxPrompt(
-    tagsFiles,
+    subTagFiles,
     "リンクするタグを選択してください（複数選択可）"
   );
   
@@ -24,9 +23,9 @@ module.exports = async (params) => {
     );
     
     if (newTagName) {
-      // 既存の大分類タグを取得
+      // 既存の大分類タグを取得（アンダースコアを含まないファイル）
       const mainCategories = app.vault.getMarkdownFiles()
-        .filter(file => file.path.startsWith(tagFolder) && file.frontmatter && file.frontmatter.type === "mainTag")
+        .filter(file => file.path.startsWith(tagFolder) && !file.basename.includes("_"))
         .map(file => file.basename);
       
       // 関連付ける大分類を選択（複数選択可）
@@ -62,13 +61,35 @@ module.exports = async (params) => {
         }
       }
       
-      // 小分類タグを作成し、選択された大分類を変数として渡す
+      // QuickAddでサブタグを作成（変数を渡す）
+      // ダブルプロンプトを避けるために変数で先に名前を設定
       await params.quickAddApi.executeChoice("サブDBタグ作成", {
-        value: newTagName,
-        variables: {
-          selectedMainCategories: JSON.stringify(selectedMainCategories)
-        }
+        value: newTagName
       });
+      
+      // ファイルが作成されたら、大分類情報を追加
+      setTimeout(async () => {
+        try {
+          // 作成されたファイルを探す
+          const tagFile = app.vault.getAbstractFileByPath(`${tagFolder}/${newTagName}.md`);
+          
+          if (tagFile) {
+            // ファイルの内容を読み込む
+            const content = await app.vault.read(tagFile);
+            
+            // 大分類情報がある場合、それを置き換える
+            if (selectedMainCategories.length > 0) {
+              const mainCategoryLinks = selectedMainCategories.map(cat => `[[${cat}]]`).join(", ");
+              const newContent = content.replace(/\*\*所属大分類\*\*\: 未設定/g, `**所属大分類**: ${mainCategoryLinks}`);
+              
+              // 更新された内容を書き込む
+              await app.vault.modify(tagFile, newContent);
+            }
+          }
+        } catch (e) {
+          console.error("タグファイル更新エラー:", e);
+        }
+      }, 500); // 少し遅延させてファイル作成を待つ
       
       // 選択タグリストに新規タグを追加
       selectedTags.push(newTagName);
