@@ -2,12 +2,24 @@ module.exports = async (params) => {
   // デバッグ情報を出力
   console.log("[QuickAdd-tag-selector] スクリプト開始");
   
-  // モード判定 (新規ノート作成からの呼び出しかどうか)
-  const isFromNewNote = params.variables && params.variables["fromNewNote"] === true;
-  // サブタグ作成専用モードかどうか
-  const isSubTagCreation = params.variables && params.variables["isSubTagCreation"] === true;
+  // 実行モード判定 - 引数から取得
+  // 以下の順に優先度を設定:
+  // 1. 明示的に渡された実行モードパラメータ
+  // 2. クエリパラメータ (URLからの呼び出し時)
+  // 3. 実行コンテキストの判定
+  const mode = params.mode || "default";
+  const isFromNewNote = mode === "fromNewNote" || (params.variables && params.variables["fromNewNote"] === true);
+  const isSubTagCreation = mode === "createSubTag" || (params.variables && params.variables["isSubTagCreation"] === true);
   
-  console.log("[QuickAdd-tag-selector] 実行モード:", { isFromNewNote, isSubTagCreation });
+  // ターゲットファイルが通知されているか確認
+  const targetFilePath = params.variables && params.variables["targetFilePath"];
+  let targetFile = null;
+  if (targetFilePath) {
+    targetFile = app.vault.getAbstractFileByPath(targetFilePath);
+    console.log(`[ターゲットファイル指定] ${targetFilePath}`);
+  }
+  
+  console.log("[QuickAdd-tag-selector] 実行モード:", { mode, isFromNewNote, isSubTagCreation });
   
   // タグフォルダからすべてのタグを取得
   const tagFolder = "02_DB_tags";
@@ -29,17 +41,20 @@ module.exports = async (params) => {
   // サブタグ作成専用モードの場合
   if (isSubTagCreation) {
     await createSubTag(params, mainTags, tagFolder);
-    return params.variables;
+    return params.variables || {};
   }
   
   // 通常モード（新規ノート作成やタグ選択）の場合
   // タグリストに「新規タグ作成」オプションを追加
   const tagOptions = [...subTags, "+ 新規タグを作成"];
   
-  // ユーザーに複数選択させる
+  // ユーザーに選択を促すメッセージを表示
+  new Notice("リンクするタグを選択してください（複数選択可）");
+
+  // ユーザーに複数選択させる（第二引数は空配列を渡す）
   const selectedTags = await params.quickAddApi.checkboxPrompt(
     tagOptions,
-    "リンクするタグを選択してください（複数選択可）"
+    []  // 空の配列を渡す
   );
   
   let finalTags = selectedTags.filter(tag => tag !== "+ 新規タグを作成");
@@ -56,18 +71,29 @@ module.exports = async (params) => {
   if (finalTags.length > 0) {
     console.log("[QuickAdd-tag-selector] 選択されたタグ:", finalTags);
     
-    // QuickAddとTemplaterの変数として保存
-    params.variables["selectedTags"] = finalTags.join(", ");
-    params.variables["tagLinks"] = finalTags.map(tag => `[[${tag}]]`).join(", ");
+    // 結果を返すオブジェクトを初期化
+    const result = params.variables || {};
     
-    // 新規ノート作成の場合はテンプレートに任せる
-    // それ以外の場合は現在のファイルにタグを適用
-    if (!isFromNewNote) {
+    // QuickAddとTemplaterの変数として保存
+    result["selectedTags"] = finalTags.join(", ");
+    result["tagLinks"] = finalTags.map(tag => `[[${tag}]]`).join(", ");
+    
+    // ファイルへのタグ適用処理
+    if (isFromNewNote) {
+      // 新規ノート作成モードの場合はテンプレート変数として返すのみ
+      console.log("[新規ノートモード] タグをテンプレート変数として返します");
+    } else if (targetFile) {
+      // ターゲットファイルが指定されている場合
+      await applyTagsToFile(targetFile, finalTags);
+    } else {
+      // 通常の場合はアクティブファイルに適用
       await applyTagsToCurrent(finalTags);
     }
+    
+    return result;
   }
   
-  return params.variables;
+  return params.variables || {};
 };
 
 // サブタグ作成関数
@@ -89,9 +115,13 @@ async function createSubTag(params, mainTags, tagFolder) {
     // 関連する大分類タグの選択
     let selectedMainCategories = [];
     if (mainTags.length > 0) {
+      // 選択を促すメッセージを表示
+      new Notice("関連付ける大分類を選択してください（複数選択可）");
+      
+      // 大分類選択（第二引数は空配列を渡す）
       selectedMainCategories = await params.quickAddApi.checkboxPrompt(
         mainTags,
-        "関連付ける大分類を選択してください（複数選択可）"
+        []  // 空の配列を渡す
       );
       
       // 何も選択されなかった場合は再確認
@@ -102,9 +132,10 @@ async function createSubTag(params, mainTags, tagFolder) {
         );
         
         if (retry) {
+          new Notice("関連付ける大分類を選択してください（複数選択可）");
           selectedMainCategories = await params.quickAddApi.checkboxPrompt(
             mainTags,
-            "関連付ける大分類を選択してください（複数選択可）"
+            []  // 空の配列を渡す
           );
         } else {
           const createNew = await params.quickAddApi.yesNoPrompt(
@@ -141,12 +172,28 @@ async function createSubTag(params, mainTags, tagFolder) {
     const mainCategoryLinks = selectedMainCategories.map(cat => `[[${cat}]]`).join(", ");
     
     // ファイルの内容を直接生成
-    const content = generateSubTagContent(newTagName, selectedMainCategories, mainCategoryLinks);
+    // mainTags を正しい形式で設定
+const mainTagsYaml = JSON.stringify(selectedMainCategories);
+const content = generateSubTagContent(newTagName, selectedMainCategories, mainCategoryLinks, mainTagsYaml);
     const filePath = `${tagFolder}/${newTagName}.md`;
     
     // ファイルを作成
     await app.vault.create(filePath, content);
     console.log(`[QuickAdd-tag-selector] サブタグファイル作成: ${filePath}`);
+    
+    // 各メインカテゴリのファイルにも関連情報を追加する処理を追加
+    for (const mainCategory of selectedMainCategories) {
+      try {
+        const mainCategoryPath = `${tagFolder}/${mainCategory}.md`;
+        const mainFile = app.vault.getAbstractFileByPath(mainCategoryPath);
+        if (mainFile) {
+          console.log(`[QuickAdd-tag-selector] メインカテゴリ ${mainCategory} に関連サブカテゴリ情報を追加`);
+          // メインカテゴリファイルの内容更新などの処理を追加可能
+        }
+      } catch (error) {
+        console.error(`[QuickAdd-tag-selector] メインカテゴリ ${mainCategory} の更新に失敗:`, error);
+      }
+    }
     
     return newTagName;
   } catch (error) {
@@ -175,20 +222,22 @@ async function createMainTag(tagName, tagFolder) {
   }
 }
 
-// 現在のファイルにタグを適用する関数
-async function applyTagsToCurrent(tags) {
+// 特定のファイルにタグを適用する関数
+async function applyTagsToFile(file, tags) {
   try {
-    const currentFile = app.workspace.getActiveFile();
-    if (!currentFile) {
-      console.log("[QuickAdd-tag-selector] アクティブなファイルがありません");
+    if (!file) {
+      console.log("[QuickAdd-tag-selector] ファイルが指定されていません");
       return false;
     }
     
-    console.log(`[QuickAdd-tag-selector] ファイル ${currentFile.path} にタグを適用`);
+    console.log(`[QuickAdd-tag-selector] ファイル ${file.path} にタグを適用`);
     
     // ファイルの内容を取得
-    const content = await app.vault.read(currentFile);
+    const content = await app.vault.read(file);
     const tagLinks = tags.map(tag => `[[${tag}]]`).join(", ");
+    
+    // YAMLフロントマター用に各タグをダブルクォートで囲む
+    const frontmatterTags = tags.map(tag => `"${tag}"`).join(", ");
     
     // 新しい内容を生成
     let newContent;
@@ -197,15 +246,15 @@ async function applyTagsToCurrent(tags) {
     if (/^---\n(.*?)\n---/s.test(content)) {
       // フロントマターがある場合
       if (/tags:.*?(\n|$)/m.test(content)) {
-        // tagsフィールドがある場合は更新（配列形式に修正）
-        newContent = content.replace(/tags:.*?(\n|$)/m, `tags: [${tags.join(", ")}]\n`);
+        // tagsフィールドがある場合は更新（YAMLの配列形式に修正）
+        newContent = content.replace(/tags:.*?(\n|$)/m, `tags: [${frontmatterTags}]\n`);
       } else {
         // tagsフィールドがない場合は追加
-        newContent = content.replace(/^(---\n)(.*?)(\n---)/s, `$1$2\ntags: [${tags.join(", ")}]$3`);
+        newContent = content.replace(/^(---\n)(.*?)(\n---)/s, `$1$2\ntags: [${frontmatterTags}]$3`);
       }
     } else {
       // フロントマターがない場合は追加
-      newContent = `---\ntags: [${tags.join(", ")}]\n---\n\n${content}`;
+      newContent = `---\ntags: [${frontmatterTags}]\n---\n\n${content}`;
     }
     
     // 「関連タグ:」の行があるか確認し、追加または更新
@@ -222,8 +271,8 @@ async function applyTagsToCurrent(tags) {
     }
     
     // 更新された内容を書き込む
-    await app.vault.modify(currentFile, newContent);
-    console.log(`[QuickAdd-tag-selector] ファイル ${currentFile.path} を更新しました`);
+    await app.vault.modify(file, newContent);
+    console.log(`[QuickAdd-tag-selector] ファイル ${file.path} を更新しました`);
     
     return true;
   } catch (error) {
@@ -232,17 +281,34 @@ async function applyTagsToCurrent(tags) {
   }
 }
 
+// 現在のアクティブファイルにタグを適用する関数
+async function applyTagsToCurrent(tags) {
+  try {
+    const currentFile = app.workspace.getActiveFile();
+    if (!currentFile) {
+      console.log("[QuickAdd-tag-selector] アクティブなファイルがありません");
+      return false;
+    }
+    
+    return await applyTagsToFile(currentFile, tags);
+  } catch (error) {
+    console.error("[QuickAdd-tag-selector] ファイル更新エラー:", error);
+    return false;
+  }
+}
+
 // サブタグファイル内容の生成
-function generateSubTagContent(tagName, mainCategories, mainCategoryLinks) {
+function generateSubTagContent(tagName, mainCategories, mainCategoryLinks, mainTagsYaml) {
   const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
   
   // 大分類タグがない場合は「未設定」と表示
   const categoryLinks = mainCategoryLinks || "未設定";
   
-  // フロントマターのタグ設定
-  let frontmatterTags = "tag";
+  // フロントマターのタグ設定 - 各タグをダブルクォートで囲む
+  let frontmatterTags = ['"tag"'];
   if (mainCategories && mainCategories.length > 0) {
-    frontmatterTags += ", " + mainCategories.join(", ");
+    const quotedMainTags = mainCategories.map(tag => `"${tag}"`);
+    frontmatterTags = frontmatterTags.concat(quotedMainTags);
   }
   
   return `---
@@ -250,7 +316,8 @@ aliases: ["${tagName}", "${tagName}タグ"]
 type: subTag
 created: ${now}
 updated: ${now}
-tags: [${frontmatterTags}]
+tags: [${frontmatterTags.join(", ")}]
+mainTags: ${mainTagsYaml}
 ---
 
 # ${tagName} タグ（小分類）
@@ -263,7 +330,7 @@ tags: [${frontmatterTags}]
 TABLE 
   file.ctime as "作成日", 
   file.mtime as "更新日"
-FROM #${tagName}
+FROM [[${tagName}]]
 WHERE file.name != "${tagName}"
 SORT file.mtime DESC
 \`\`\`
@@ -280,6 +347,7 @@ aliases: ["${tagName}", "${tagName}タグ"]
 type: mainTag
 created: ${now}
 updated: ${now}
+tags: ["tag"]
 ---
 
 # ${tagName} タグ（大分類）
@@ -293,7 +361,7 @@ TABLE
   file.ctime as "作成日", 
   file.mtime as "更新日"
 FROM #tag
-WHERE contains(file.name, "${tagName}_") OR contains(tags, "${tagName}") OR contains(file.outlinks, "[[${tagName}]]")
+WHERE contains(file.frontmatter.mainTags, "${tagName}")
 SORT file.name ASC
 \`\`\`
 
@@ -303,8 +371,8 @@ SORT file.name ASC
 TABLE 
   file.ctime as "作成日", 
   file.mtime as "更新日"
-FROM #"${tagName}" OR [[${tagName}]]
-WHERE file.name != "${tagName}" AND !contains(file.name, "_")
+FROM [[${tagName}]]
+WHERE file.name != "${tagName}" AND !contains(file.frontmatter.type, "subTag")
 SORT file.mtime DESC
 \`\`\`
 
