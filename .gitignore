@@ -1,8 +1,41 @@
-# Obsidianの一時ファイルやキャッシュのみを除外
-.obsidian/workspace.json
-.obsidian/cache/
-.obsidian/plugins/*/data.json
+# Obsidian設定ファイル（一部を除外）
+.obsidian/*
+!.obsidian/app.json
+!.obsidian/appearance.json
+!.obsidian/config
+!.obsidian/community-plugins.json
+!.obsidian/core-plugins.json
+!.obsidian/graph.json
+!.obsidian/hotkeys.json
 
-# ゴミ箱とシステムキャッシュを除外
+# キャッシュファイル
+.obsidian-git-data
 .trash/
 .DS_Store
+
+# ワークスペース（表示状態）ファイル
+.obsidian/workspace
+.obsidian/workspace.json
+.obsidian/workspaces.json
+
+# ホットリロードキャッシュ
+.obsidian/plugins/hot-reload/
+
+# モバイル設定
+.obsidian/plugins/mobile/
+
+# 一時ファイル
+*.temp
+*.tmp
+
+# バックアップファイル
+*.bak
+
+# OSが生成するファイル
+Thumbs.db
+
+# プラグインフォルダ（必要に応じてコメントアウト）
+# .obsidian/plugins/
+
+# プラグインデータ（必要に応じてコメントアウト）
+# .obsidian/plugins/*/*.data.json
