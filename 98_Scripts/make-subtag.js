@@ -1,9 +1,11 @@
-async function generateSubTag(params) {
-  // 1. 大分類タグのリストを取得
+// 98_Scripts/make-subtag.js
+module.exports = async (params) => {
+  // 1. 大分類タグのリストを取得（テンプレートを除外）
   const mainTagFiles = app.vault.getMarkdownFiles()
     .filter(file => {
       const cache = app.metadataCache.getFileCache(file);
-      return cache?.frontmatter?.type === "mainTag";
+      return cache?.frontmatter?.type === "mainTag" && 
+             !file.basename.toLowerCase().includes("template");
     })
     .map(file => file.basename);
   
@@ -20,7 +22,7 @@ async function generateSubTag(params) {
   
   if (!subTagName) return;
   
-  // 3. 大分類タグを複数選択
+  // 3. 大分類タグを複数選択（選択プロンプトテキストを直接渡す）
   const selectedMainTags = await params.quickAddApi.checkboxPrompt(
     mainTagFiles,
     "関連付ける大分類タグを選択してください（複数選択可）"
@@ -28,18 +30,55 @@ async function generateSubTag(params) {
   
   if (!selectedMainTags || selectedMainTags.length === 0) return;
   
-  // 4. 選択された大分類タグをパラメータとして保存
-  params.variables["subTagName"] = subTagName;
-  params.variables["selectedMainTags"] = selectedMainTags;
-  
-  // 5. YAML配列形式で保存するためのタグ文字列を生成
-  const mainTagsYaml = JSON.stringify(selectedMainTags);
-  params.variables["mainTagsYaml"] = mainTagsYaml;
-  
-  // 6. リンク形式での大分類リスト
-  const mainTagLinks = selectedMainTags.map(tag => `[[${tag}]]`).join(", ");
-  params.variables["mainTagLinks"] = mainTagLinks;
-}
+  // 4. ファイル内容を直接構築
+  const fileContent = `---
+aliases: [${subTagName}タグ]
+type: subTag
+created: ${moment().format("YYYY-MM-DD HH:mm:ss")}
+updated: ${moment().format("YYYY-MM-DD HH:mm:ss")}
+tags: [tag]
+mainTags: ${JSON.stringify(selectedMainTags)}
+---
 
-// この行が重要！Templaterはこの形式のエクスポートを期待しています
-module.exports = generateSubTag;
+# ${subTagName} タグ（小分類）
+
+**所属大分類**: ${selectedMainTags.map(tag => `[[${tag}]]`).join(", ")}
+
+## 関連ノート一覧
+
+\`\`\`dataview
+TABLE 
+  file.ctime as "作成日", 
+  file.mtime as "更新日"
+FROM [[${subTagName}]] 
+WHERE file.name != "${subTagName}"
+SORT file.mtime DESC
+\`\`\`
+
+## メモ`;
+
+  // 5. ファイルを作成
+  try {
+    // フォルダパスを確保
+    const folderPath = "02_DB_tags";
+    const filePath = `${folderPath}/${subTagName}.md`;
+    
+    // ファイル作成
+    await app.vault.create(filePath, fileContent);
+    
+    // 成功通知
+    new Notice(`小分類タグ「${subTagName}」を作成しました！`);
+    
+    // 作成したファイルを開く
+    const file = app.vault.getAbstractFileByPath(filePath);
+    if (file) {
+      app.workspace.getLeaf().openFile(file);
+    }
+  } catch (error) {
+    console.error("ファイル作成エラー:", error);
+    new Notice(`エラー: ${error.message}`);
+  }
+  
+  // QuickAddの処理を終了（テンプレート処理は行わない）
+  return false;
+};

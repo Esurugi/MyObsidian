@@ -20,15 +20,4 @@ WHERE contains(file.frontmatter.mainTags, "<% tp.file.title %>")
 SORT file.name ASC
 <% "```" %>
 
-## 直接リンクしているノート
-
-<% "```dataview" %>
-TABLE 
-  file.ctime as "作成日", 
-  file.mtime as "更新日"
-FROM [[<% tp.file.title %>]] 
-WHERE file.name != "<% tp.file.title %>" AND !contains(file.frontmatter.type, "subTag")
-SORT file.mtime DESC
-<% "```" %>
-
 ## メモ

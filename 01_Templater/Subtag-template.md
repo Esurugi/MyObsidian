@@ -6,7 +6,6 @@ updated: <% tp.file.last_modified_date() %>
 tags: [tag]
 mainTags: <% tp.user.make_subtag.mainTagsYaml %>
 ---
-
 # <% tp.file.title %> タグ（小分類）
 
 **所属大分類**: <% tp.user.make_subtag.mainTagLinks %>
