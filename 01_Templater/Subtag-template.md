@@ -1,9 +1,10 @@
 ---
-aliases: [<% tp.file.title %>タグ]
+aliases: []
 type: subTag
 created: <% tp.file.creation_date() %>
 updated: <% tp.file.last_modified_date() %>
-tags: [tag]
+tags:
+  - tag
 mainTags: <% tp.user.make_subtag.mainTagsYaml %>
 ---
 # <% tp.file.title %> タグ（小分類）

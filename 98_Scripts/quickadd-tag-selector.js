@@ -38,15 +38,18 @@ module.exports = async (params) => {
   
   console.log("[QuickAdd-tag-selector] 既存タグ:", { mainTags, subTags });
   
-  // サブタグ作成専用モードの場合
+  // サブタグ作成専用モードは無効化
   if (isSubTagCreation) {
-    await createSubTag(params, mainTags, tagFolder);
+    new Notice("この機能は無効化されています。タグ管理機能から新規タグを作成してください。");
     return params.variables || {};
   }
   
+  // メインタグとサブタグを結合してソート
+  const sortedTags = [...mainTags, ...subTags].sort();
+  
   // 通常モード（新規ノート作成やタグ選択）の場合
-  // タグリストに「新規タグ作成」オプションを追加
-  const tagOptions = [...subTags, "+ 新規タグを作成"];
+  // 既存のタグのみ表示
+  const tagOptions = sortedTags;
   
   // ユーザーに選択を促すメッセージを表示
   new Notice("リンクするタグを選択してください（複数選択可）");
@@ -57,26 +60,24 @@ module.exports = async (params) => {
     []  // 空の配列を渡す
   );
   
-  let finalTags = selectedTags.filter(tag => tag !== "+ 新規タグを作成");
-  
-  // 「新規タグ作成」が選択された場合
-  if (selectedTags.includes("+ 新規タグを作成")) {
-    const newTagName = await createSubTag(params, mainTags, tagFolder);
-    if (newTagName) {
-      finalTags.push(newTagName);
-    }
-  }
+  let finalTags = selectedTags;
   
   // タグが選択されたら、変数に保存
   if (finalTags.length > 0) {
-    console.log("[QuickAdd-tag-selector] 選択されたタグ:", finalTags);
+    console.log("[QuickAdd-tag-selector] 選択されたタグ (詳細):", JSON.stringify(finalTags));
+    
+    // 入力パラメータをチェック
+    console.log("[QuickAdd-tag-selector] 入力変数:", JSON.stringify(params.variables || {}));
     
     // 結果を返すオブジェクトを初期化
-    const result = params.variables || {};
+    const result = {}; // 新しい空のオブジェクトから始める
     
     // QuickAddとTemplaterの変数として保存
     result["selectedTags"] = finalTags.join(", ");
     result["tagLinks"] = finalTags.map(tag => `[[${tag}]]`).join(", ");
+    
+    // 結果を詳細にログ表示
+    console.log("[QuickAdd-tag-selector] 返却値:", JSON.stringify(result));
     
     // ファイルへのタグ適用処理
     if (isFromNewNote) {
@@ -304,19 +305,11 @@ function generateSubTagContent(tagName, mainCategories, mainCategoryLinks, mainT
   // 大分類タグがない場合は「未設定」と表示
   const categoryLinks = mainCategoryLinks || "未設定";
   
-  // フロントマターのタグ設定 - 各タグをダブルクォートで囲む
-  let frontmatterTags = ['"tag"'];
-  if (mainCategories && mainCategories.length > 0) {
-    const quotedMainTags = mainCategories.map(tag => `"${tag}"`);
-    frontmatterTags = frontmatterTags.concat(quotedMainTags);
-  }
-  
   return `---
-aliases: ["${tagName}", "${tagName}タグ"]
 type: subTag
 created: ${now}
 updated: ${now}
-tags: [${frontmatterTags.join(", ")}]
+tags: ["tag"]
 mainTags: ${mainTagsYaml}
 ---
 
@@ -343,7 +336,6 @@ function generateMainTagContent(tagName) {
   const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
   
   return `---
-aliases: ["${tagName}", "${tagName}タグ"]
 type: mainTag
 created: ${now}
 updated: ${now}

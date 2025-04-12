@@ -1,8 +1,9 @@
 ---
-aliases: [<% tp.file.title %>タグ]
 type: mainTag
 created: <% tp.file.creation_date() %>
 updated: <% tp.file.last_modified_date() %>
+tags:
+  - tag
 ---
 # <% tp.file.title %> タグ（大分類）
 

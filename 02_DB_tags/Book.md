@@ -1,5 +1,5 @@
 ---
-aliases: [Bookタグ]
+aliases: []
 type: mainTag
 created: 2025-03-19 20:10
 updated: 2025-03-19 20:10
