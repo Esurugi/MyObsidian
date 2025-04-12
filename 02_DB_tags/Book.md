@@ -1,8 +1,9 @@
 ---
-aliases: []
 type: mainTag
 created: 2025-03-19 20:10
 updated: 2025-03-19 20:10
+tags:
+  - tag
 ---
 
 # Book タグ（大分類）

@@ -1,15 +1,12 @@
 ---
-aliases: []
+aliases: 
 type: subTag
 created: 2025-04-12 01:59:34
 updated: 2025-04-12 01:59:34
-tags:
-  - tag
-  - Study
+tags: [tag]
 mainTags:
   - Study
 ---
-
 # Study_English タグ（小分類）
 
 **所属大分類**: [[Study]]

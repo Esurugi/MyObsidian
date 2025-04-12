@@ -1,8 +1,9 @@
 ---
-aliases: []
 type: mainTag
 created: 2025-03-19 20:11
 updated: 2025-03-19 20:11
+tags:
+  - tag
 ---
 
 # Memo タグ（大分類）

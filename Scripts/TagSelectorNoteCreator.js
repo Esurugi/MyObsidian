@@ -1,7 +1,7 @@
 /**
  * TagSelectorNoteCreator.js
  * タグを選択して新規ノートを作成するQuickAddスクリプト
- * サブタグの関連ノート一覧Dataviewに表示されるよう対応
+ * 修正版：タグを階層構造として解釈せず、そのまま使用
  */
 
 module.exports = async (params) => {
@@ -51,7 +51,7 @@ module.exports = async (params) => {
     let finalTags = selectedTags ? [...selectedTags] : [];
     if (finalTags.includes("+ 新規タグを作成")) {
       const newTagName = await quickAddApi.inputPrompt(
-        "新規タグ名を入力してください（例: 技術_プログラミング）", 
+        "新規タグ名を入力してください", 
         ""
       );
       
@@ -129,42 +129,32 @@ module.exports = async (params) => {
       }
     }
     
-    // 8. タグ情報を整理
-    const formattedTags = []; // YAMLフロントマター用タグ（#なし）
-    const tagLinks = [];      // 本文中のリンク用
-    const hashTags = [];      // 表示用ハッシュタグ（#あり）
+    // 8. タグ情報の準備（タグの解釈はせず、そのまま使用）
+    const frontmatterTags = []; // YAMLフロントマター用（タグの標準化）
+    const tagLinks = [];        // 本文中のリンク用
+    const displayTags = [];     // 表示用（#付き）
     
     finalTags.forEach(tag => {
-      // タグを「#技術/プログラミング」形式に変換
-      let formattedTag;
-      if (tag.includes("_")) {
-        // 小分類タグ（サブタグ）の処理: 技術_プログラミング → 技術/プログラミング
-        formattedTag = tag.split("_").join("/");
-      } else {
-        // 大分類タグの処理
-        formattedTag = tag;
-      }
+      // フロントマター用タグ - アンダースコアはそのまま使用
+      frontmatterTags.push(tag);
       
-      // #がついていない形式 (YAML frontmatter用)
-      formattedTags.push(formattedTag);
-      
-      // #がついている形式 (表示用)
-      hashTags.push(`#${formattedTag}`);
-      
-      // リンク形式 ([[タグ名]])
+      // リンク形式
       tagLinks.push(`[[${tag}]]`);
+      
+      // 表示用タグ（#付き）
+      displayTags.push(`#${tag}`);
     });
     
     // 9. YAML フロントマター用にタグをフォーマット
     let yamlTags = "";
-    if (formattedTags.length > 0) {
-      yamlTags = formattedTags.join(", ");
+    if (frontmatterTags.length > 0) {
+      yamlTags = frontmatterTags.join(", ");
     }
     
     // 10. 現在の日時を取得
     const now = new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '');
     
-    // 11. タグリンクセクションを生成
+    // 11. タグリンクセクションを生成（明示的なリンクを維持）
     let tagLinksSection = "";
     if (tagLinks.length > 0) {
       tagLinksSection = `
@@ -235,7 +225,7 @@ ${tagLinksSection}
       
       // 成功メッセージ
       const Notice = app.plugins.plugins.quickadd?.api?.notice || window.Notice;
-      new Notice(`ノート「${noteTitle}」を作成しました [${hashTags.join(" ")}]`);
+      new Notice(`ノート「${noteTitle}」を作成しました [${displayTags.join(" ")}]`);
       
     } catch (error) {
       console.error("ノート作成エラー:", error);

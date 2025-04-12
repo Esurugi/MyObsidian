@@ -23,5 +23,14 @@
       ],
       "key": "End"
     }
-  ]
+  ],
+  "quickadd:choice:796418f8-850b-465a-877c-125de3a26b87": [
+    {
+      "modifiers": [
+        "Mod"
+      ],
+      "key": "N"
+    }
+  ],
+  "file-explorer:new-file": []
 }
