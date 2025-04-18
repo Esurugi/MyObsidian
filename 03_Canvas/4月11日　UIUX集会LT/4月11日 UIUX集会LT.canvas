@@ -14,17 +14,6 @@
       "y": 20
     },
     {
-      "file": "03_Canvas/4月11日　UIUX集会LT/「整理という名の苦行-なぜデジタルツールを使っても情報は片付かないのか？」調査結果.md",
-      "height": 740,
-      "id": "d74c4607b565711c",
-      "styleAttributes": {
-      },
-      "type": "file",
-      "width": 700,
-      "x": -580,
-      "y": -500
-    },
-    {
       "height": 700,
       "id": "2767c6982fee571a",
       "styleAttributes": {
@@ -56,6 +45,17 @@
       "width": 880,
       "x": -620,
       "y": 400
+    },
+    {
+      "file": "03_Canvas/4月11日　UIUX集会LT/「整理という名の苦行-なぜデジタルツールを使っても情報は片付かないのか？」調査結果.md",
+      "height": 740,
+      "id": "d74c4607b565711c",
+      "styleAttributes": {
+      },
+      "type": "file",
+      "width": 700,
+      "x": -580,
+      "y": -500
     }
   ]
 }
