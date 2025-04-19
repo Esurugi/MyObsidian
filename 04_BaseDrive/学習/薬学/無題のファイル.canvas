@@ -1,0 +1,137 @@
+{
+  "edges": [
+    {
+      "fromNode": "84a851aede3a9008",
+      "fromSide": "right",
+      "id": "274509e2b3c26427",
+      "styleAttributes": {
+      },
+      "toNode": "e6defdbe65196f4d",
+      "toSide": "left"
+    },
+    {
+      "fromNode": "84a851aede3a9008",
+      "fromSide": "right",
+      "id": "aeccb2dc7221d913",
+      "styleAttributes": {
+      },
+      "toNode": "1d54a1a0108ac958",
+      "toSide": "left"
+    },
+    {
+      "fromNode": "84a851aede3a9008",
+      "fromSide": "right",
+      "id": "cdf8867354dff86b",
+      "styleAttributes": {
+      },
+      "toNode": "98d64476afe2fa99",
+      "toSide": "left"
+    },
+    {
+      "fromNode": "84a851aede3a9008",
+      "fromSide": "right",
+      "id": "644c4bc8585705f7",
+      "styleAttributes": {
+      },
+      "toNode": "06901bf98eb2e4ef",
+      "toSide": "left"
+    },
+    {
+      "fromNode": "84a851aede3a9008",
+      "fromSide": "right",
+      "id": "3f16a99be3461999",
+      "styleAttributes": {
+      },
+      "toNode": "882288a26dc6eb43",
+      "toSide": "left"
+    },
+    {
+      "fromNode": "84a851aede3a9008",
+      "fromSide": "right",
+      "id": "da23f0046e39d9c2",
+      "styleAttributes": {
+      },
+      "toNode": "3e237c4fa4533b1d",
+      "toSide": "left"
+    }
+  ],
+  "nodes": [
+    {
+      "file": "血管平滑筋Adα1遮断薬.md",
+      "height": 100,
+      "id": "1d54a1a0108ac958",
+      "styleAttributes": {
+      },
+      "type": "file",
+      "width": 400,
+      "x": -500,
+      "y": -580
+    },
+    {
+      "file": "中枢Adα2遮断刺激薬.md",
+      "height": 80,
+      "id": "e6defdbe65196f4d",
+      "styleAttributes": {
+      },
+      "type": "file",
+      "width": 400,
+      "x": -500,
+      "y": -460
+    },
+    {
+      "height": 60,
+      "id": "06901bf98eb2e4ef",
+      "styleAttributes": {
+      },
+      "text": "",
+      "type": "text",
+      "width": 260,
+      "x": -500,
+      "y": -240
+    },
+    {
+      "height": 60,
+      "id": "882288a26dc6eb43",
+      "styleAttributes": {
+      },
+      "text": "",
+      "type": "text",
+      "width": 260,
+      "x": -500,
+      "y": -140
+    },
+    {
+      "height": 60,
+      "id": "3e237c4fa4533b1d",
+      "styleAttributes": {
+      },
+      "text": "",
+      "type": "text",
+      "width": 260,
+      "x": -500,
+      "y": -40
+    },
+    {
+      "height": 80,
+      "id": "84a851aede3a9008",
+      "styleAttributes": {
+      },
+      "text": "### 高血圧治療薬\n",
+      "type": "text",
+      "width": 200,
+      "x": -920,
+      "y": -330
+    },
+    {
+      "height": 60,
+      "id": "98d64476afe2fa99",
+      "styleAttributes": {
+      },
+      "text": "Adβ遮断薬",
+      "type": "text",
+      "width": 260,
+      "x": -500,
+      "y": -350
+    }
+  ]
+}
